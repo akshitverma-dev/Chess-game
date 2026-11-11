@@ -2,21 +2,15 @@ import copy
 import pygame
 
 pygame.init()
-
-# Sizes
 Window_Size = (800, 800)
 Element_size = (100, 100)
 screen = pygame.display.set_mode(Window_Size)
 pygame.display.set_caption("Chess Game")
 
-# Colors
 Whitecolour = (235, 235, 208)
 Blackcolour = (119, 148, 85)
 CHECK_COLOR = (220, 60, 60)
-
 alphabets = "abcdefgh"
-
-# Global data structures
 squares_Array = {}
 piece_array = {}
 
@@ -315,13 +309,6 @@ def get_all_legal_moves_for_side(
             moves = get_strictly_legal_moves(p, board_state, last_double_pawn)
             all_moves.extend(moves)
     return all_moves
-
-
-# ==========================================
-# DRAW RULE EVALUATORS & POSITION HASHING
-# ==========================================
-
-
 def get_board_hash(board_state: dict, active_turn: str, last_double_pawn: tuple) -> str:
     """Generates a unique string hash of the current board state for repetition checks."""
     pieces_str_list = []
@@ -338,18 +325,15 @@ def is_insufficient_material(board_state: dict) -> bool:
     """Checks if remaining pieces on board are insufficient to force a checkmate."""
     pieces = list(board_state.values())
     if len(pieces) <= 2:
-        return True  # K vs K
-
+        return True 
     if len(pieces) == 3:
         names = [p.name for p in pieces]
         if "Knight" in names or "Bishop" in names:
-            return True  # K+N vs K or K+B vs K
+            return True  
 
     if len(pieces) == 4:
         white_pieces = [p for p in pieces if p.side == "White"]
         black_pieces = [p for p in pieces if p.side == "Black"]
-
-        # K+B vs K+B (Check if Bishops are on same color squares)
         if len(white_pieces) == 2 and len(black_pieces) == 2:
             wb = next((p for p in white_pieces if p.name == "Bishop"), None)
             bb = next((p for p in black_pieces if p.name == "Bishop"), None)
@@ -367,7 +351,7 @@ def main():
     Selected_piece = None
     drag_pos = (0, 0)
     Move_count = 0
-    halfmove_clock = 0  # Tracker for 50-move rule
+    halfmove_clock = 0  
     new_pos = []
     last_double_pawn = None
     game_over_msg = ""
@@ -392,7 +376,6 @@ def main():
         position_counts = {}
         starting_position()
 
-        # Record initial position hash
         init_hash = get_board_hash(piece_array, "White", None)
         position_counts[init_hash] = 1
 
@@ -407,7 +390,7 @@ def main():
                 running = False
 
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # Press 'R' to reset match
+                if event.key == pygame.K_r:  
                     reset_game()
 
             elif event.type == pygame.MOUSEMOTION:
@@ -439,17 +422,14 @@ def main():
 
                         del piece_array[(start_x, start_y)]
 
-                        # En Passant Capture
                         if (is_pawn_move and target_x != start_x and (target_x, target_y) not in piece_array):
                             del piece_array[(target_x, start_y)]
                             is_capture = True
 
-                        # Standard Capture
                         if (target_x, target_y) in piece_array:
                             del piece_array[(target_x, target_y)]
                             is_capture = True
-
-                        # Castling Move
+]
                         if Selected_piece.name == "King" and abs(target_x - start_x) == 2:
                             if target_x == 6:
                                 rook = piece_array.pop((7, start_y))
@@ -462,12 +442,10 @@ def main():
                                 rook.has_moved = True
                                 piece_array[(3, start_y)] = rook
 
-                        # Move Execution
                         Selected_piece.x = target_x
                         Selected_piece.y = target_y
                         Selected_piece.has_moved = True
 
-                        # Auto-Promotion
                         if is_pawn_move and (target_y == 1 or target_y == 8):
                             Selected_piece.name = "Queen"
                             prefix = "w" if Selected_piece.side == "White" else "b"
@@ -483,13 +461,11 @@ def main():
 
                         piece_array[(target_x, target_y)] = Selected_piece
 
-                        # Update Double-Step Pawn tracking for En Passant
                         if is_pawn_move and abs(target_y - start_y) == 2:
                             last_double_pawn = (target_x, target_y)
                         else:
                             last_double_pawn = None
 
-                        # Update 50-Move Clock
                         if is_pawn_move or is_capture:
                             halfmove_clock = 0
                         else:
@@ -498,29 +474,23 @@ def main():
                         Move_count += 1
                         next_turn = "White" if Move_count % 2 == 0 else "Black"
 
-                        # ==========================================
-                        # GAME OVER & DRAW EVALUATION CHECKS
-                        # ==========================================
                         next_legal_moves = get_all_legal_moves_for_side(
                             next_turn, piece_array, last_double_pawn
                         )
 
-                        # 1. Checkmate & Stalemate
+                      
                         if len(next_legal_moves) == 0:
                             if is_king_in_check(next_turn, piece_array):
                                 game_over_msg = f"CHECKMATE! {current_turn.upper()} WINS!"
                             else:
                                 game_over_msg = "DRAW BY STALEMATE!"
 
-                        # 2. Insufficient Material
                         elif is_insufficient_material(piece_array):
                             game_over_msg = "DRAW BY INSUFFICIENT MATERIAL!"
 
-                        # 3. 50-Move Rule (100 halfmoves = 50 full moves)
                         elif halfmove_clock >= 100:
                             game_over_msg = "DRAW BY 50-MOVE RULE!"
 
-                        # 4. Threefold Repetition
                         else:
                             b_hash = get_board_hash(piece_array, next_turn, last_double_pawn)
                             position_counts[b_hash] = position_counts.get(b_hash, 0) + 1
@@ -530,13 +500,11 @@ def main():
                     Selected_piece = None
                     new_pos = []
 
-        # Render Loop
         screen.fill((0, 0, 0))
 
         white_in_check = is_king_in_check("White", piece_array)
         black_in_check = is_king_in_check("Black", piece_array)
 
-        # Draw Board Squares
         for sqr in squares_Array.values():
             grid_x = sqr.x // 100
             grid_y = (sqr.y // 100) + 1
@@ -551,25 +519,21 @@ def main():
             )
             sqr.draw(screen, is_check=in_check)
 
-        # Highlight Valid Moves
         for move in new_pos:
             hx, hy = move
             highlight_surface = pygame.Surface(Element_size, pygame.SRCALPHA)
             pygame.draw.circle(highlight_surface, (0, 0, 0, 60), (50, 50), 16)
             screen.blit(highlight_surface, (hx * 100, (hy - 1) * 100))
 
-        # Draw Active Pieces
         for p in piece_array.values():
             if p != Selected_piece:
                 screen.blit(p.image, (p.x * 100, (p.y - 1) * 100))
 
-        # Render Dragged Piece
         if Selected_piece is not None:
             screen.blit(
                 Selected_piece.image, (drag_pos[0] - 50, drag_pos[1] - 50)
             )
 
-        # Display Game Over Overlay
         if game_over_msg:
             font = pygame.font.SysFont(None, 42)
             sub_font = pygame.font.SysFont(None, 28)
